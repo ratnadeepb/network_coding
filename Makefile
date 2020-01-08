@@ -4,7 +4,8 @@ TARGET=graph.exe
 
 OBJS=gluethread/glthread.o \
 		graph.o \
-		topologies.o
+		topologies.o \
+		utils.o
 
 graph.exe: testapp.o ${OBJS}
 	@${CC} ${CFLAGS} testapp.o ${OBJS} -o graph.exe
@@ -20,6 +21,9 @@ graph.o: graph.c
 
 topologies.o: topologies.c
 	@${CC} ${CFLAGS} -c -I . topologies.c -o topologies.o
+
+util.o: utils.c
+	@${CC} ${CFLAGS} -c -I . utils.c -o utils.o
 
 clean:
 	@rm *.o

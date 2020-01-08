@@ -7,6 +7,7 @@
 #define __GRAPH_H__
 
 #include "gluethread/glthread.h"
+#include "net.h"
 #include <assert.h>
 #include <string.h>
 
@@ -23,6 +24,7 @@ typedef struct interface_ {
         char if_name[IF_NAME_SIZE];
         struct node_ *att_node;
         struct link_ *link;
+        intf_nw_props_t intf_nw_props;
 } interface_t;
 
 typedef struct link_ {
@@ -35,6 +37,7 @@ struct node_ {
         char node_name[NODE_NAME_SIZE];
         interface_t intf[MAX_INTF_PER_NODE];
         glthread_t graph_glue;
+        node_nw_prop_t node_nw_prop;
 };
 
 typedef struct graph_ {
@@ -73,15 +76,18 @@ get_node_if_by_name(node_t *node, char *if_name)
 {
         int i;
 
-        for (i = 0; i < MAX_INTF_PER_NODE; i++)
-                if (strncmp(node->intf[i].if_name, if_name, IF_NAME_SIZE) ==
-                    0) {
-                        return &node->intf[i];
-                }
+        if (!node->intf) /* interface array is empty */
+                return NULL;
+        for (i = 0; i < MAX_INTF_PER_NODE; i++) {
+                if (&node->intf[i] != NULL)
+                        if (strncmp(node->intf[i].if_name, if_name,
+                                    IF_NAME_SIZE) == 0) {
+                                return &node->intf[i];
+                        }
+        }
         return NULL; /* if interface not found */
 }
 
-#define offset(struct_name, fld_name) (long int)&(((struct_name *)0)->fld_name)
 GLTHREAD_TO_STRUCT(thread_to_node, node_t, graph_glue);
 
 /* return node, if present, by name from graph */

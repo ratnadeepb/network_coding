@@ -34,6 +34,7 @@ create_graph_node(graph_t *graph, char *node_name)
                 return NULL;
 
         strcpy(node->node_name, node_name);
+        init_node_nw_prop(&node->node_nw_prop);
         glthread_add_next(&graph->node_list, &node->graph_glue);
         return node;
 }
@@ -54,6 +55,12 @@ insert_link_between_two_nodes(node_t *node1, node_t *node2, char *from_if_name,
 
         link->intf1.att_node = node1;
         link->intf2.att_node = node2;
+
+        init_intf_nw_prop(&link->intf1.intf_nw_props);
+        init_intf_nw_prop(&link->intf2.intf_nw_props);
+
+        intf_assign_mac_addr(&link->intf1);
+        intf_assign_mac_addr(&link->intf2);
 
         link->cost = cost;
 

@@ -52,7 +52,9 @@ glthread_add_last(glthread_t *base_glthread, glthread_t *new_glthread);
         }                                                                      \
         }
 
-#define GLTHREAD_GET_USER_DATA_FROM_OFFSET(glthreadptr, offset)                 \
+#define offset(struct_name, fld_name) (long int)&(((struct_name *)0)->fld_name)
+
+#define GLTHREAD_GET_USER_DATA_FROM_OFFSET(glthreadptr, offset)                \
         (void *)((char *)(glthreadptr)-offset)
 
 void
