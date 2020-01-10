@@ -9,6 +9,7 @@
 #include "gluethread/glthread.h"
 #include "net.h"
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #define NODE_NAME_SIZE 16
@@ -27,7 +28,7 @@ typedef struct interface_ {
         intf_nw_props_t intf_nw_props;
 } interface_t;
 
-typedef struct link_ {
+struct link_ {
         interface_t intf1;
         interface_t intf2;
         unsigned int cost;
@@ -40,7 +41,7 @@ struct node_ {
         node_nw_prop_t node_nw_prop;
 };
 
-typedef struct graph_ {
+struct graph_ {
         char topology_name[32];
         glthread_t node_list;
 };
@@ -64,7 +65,7 @@ get_node_intf_available_slot(node_t *node)
 {
         int i;
         for (i = 0; i < MAX_INTF_PER_NODE; i++) {
-                if (!&node->intf[i])
+                if (strncmp(node->intf[i].if_name, "", IF_NAME_SIZE) == 0)
                         return i;
         }
         return -1;

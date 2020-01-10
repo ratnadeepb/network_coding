@@ -3,11 +3,11 @@
  * Created by Ratnadeep Bhattacharya
  */
 
-#include "net.h"
+#include "graph.h"
 #include <assert.h>
 #include <math.h>
-#include <memory.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static unsigned int
 hashcode(void *ptr, unsigned int size)
@@ -36,8 +36,6 @@ intf_assign_mac_addr(interface_t *intf)
         hash_val *= hashcode((void *)intf->if_name, IF_NAME_SIZE);
         memset(IF_MAC(intf), 0, MAC_ADDR_LEN);
         strncpy(IF_MAC(intf), (char *)&hash_val, MAC_ADDR_LEN);
-        // strcpy(IF_MAC(intf), intf->att_node->node_name);
-        // strcat(IF_MAC(intf), intf->if_name);
 }
 
 bool_t
@@ -83,7 +81,7 @@ node_unset_intf_ip_addr(node_t *node, char *local_if)
                 return TRUE;
         intf->intf_nw_props.is_ip_add_config = FALSE;
         intf->intf_nw_props.mask = 0;
-        strncpy(IF_IP(intf), 0, IP_ADDR_LEN);
+        memset((void *)IF_IP(intf), 0, IP_ADDR_LEN);
         return TRUE;
 }
 
@@ -104,7 +102,7 @@ node_get_matching_subnet_interface(node_t *node, char *ip_addr)
                 apply_mask(IF_IP(&node->intf[i]), mask,
                            local_nw_id); /* get the nw id of the interface */
                 apply_mask(ip_addr, mask, remote_nw_id);
-                if (strcmp(local_nw_id, remote_nw_id) == 0)
+                if (strncmp(local_nw_id, remote_nw_id, IP_ADDR_LEN) == 0)
                         intf = &node->intf[i];
         }
         return intf; /* null if none found */
@@ -128,19 +126,22 @@ dump_nw_graph(graph_t *graph)
                                 printf("\tLoopback addres: %s\n",
                                        n->node_nw_prop.lb_addr.ip_addr);
                         for (i = 0; i < MAX_INTF_PER_NODE; i++) {
-                                if (&n->intf[i] != NULL) {
+                                if (strncmp(n->intf[i].if_name, "",
+                                            IF_NAME_SIZE) != 0) {
+                                        // if (&n->intf[i] != NULL) {
                                         printf("\tInterface: %s",
                                                n->intf[i].if_name);
                                         printf(" , nbr node: %s",
-                                               n->intf[i].att_node);
+                                               n->intf[i].att_node->node_name);
                                         if (n->intf[i]
                                                 .intf_nw_props.is_ip_add_config)
-                                                printf(
-                                                    ", addres: %s\\%c\n",
-                                                    n->intf[i]
-                                                        .intf_nw_props.ip_add,
-                                                    n->intf[i]
-                                                        .intf_nw_props.mask);
+                                                printf(", addres: "
+                                                       "%s/%d\n",
+                                                       n->intf[i]
+                                                           .intf_nw_props.ip_add
+                                                           .ip_addr,
+                                                       n->intf[i]
+                                                           .intf_nw_props.mask);
                                 }
                         }
                 }
@@ -153,12 +154,13 @@ convert_ip_from_str_to_int(char *ip_addr)
 {
         char *token;
         char *bits;
+        char *delim = ".";
         unsigned int ip;
         int i;
 
         ip = 0;
         for (i = 0, token = ip_addr;; i++, token = NULL) {
-                bits = strtok(token, '.');
+                bits = strtok(token, delim);
                 if (!bits)
                         break;
                 if (i > 3) {
@@ -182,8 +184,8 @@ convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer)
                     (int)(ip_addr / (unsigned int)pow(256, 3 - i));
                 ip_addr -= num;
                 if (i == 0)
-                        strcpy(output_buffer, num);
+                        strcpy(output_buffer, (char *)&num);
                 else
-                        strcat(output_buffer, num);
+                        strcat(output_buffer, (char *)&num);
         }
 }

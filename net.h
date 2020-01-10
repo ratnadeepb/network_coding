@@ -6,12 +6,15 @@
 #ifndef __NET_H__
 #define __NET_H__
 
-#include "graph.h"
 #include "utils.h"
 #include <memory.h>
 
 #define IP_ADDR_LEN 16
 #define MAC_ADDR_LEN 8
+
+typedef struct node_ node_t;
+typedef struct interface_ interface_t;
+typedef struct graph_ graph_t;
 
 typedef struct ip_add_ {
         char ip_addr[IP_ADDR_LEN];

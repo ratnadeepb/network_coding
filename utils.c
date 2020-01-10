@@ -12,8 +12,10 @@ apply_mask(char *prefix, char mask, char *str_prefix)
 {
         char *dst;
         int i;
+
+        dst = NULL;
         inet_pton(AF_INET, prefix, (void *)dst);
-        dst = htonl(dst);
+        *dst = htonl(*dst);
         if (mask < 0 || mask > 32) {
                 fprintf(stderr, "incorrect mask provided\n");
                 return;
@@ -21,7 +23,7 @@ apply_mask(char *prefix, char mask, char *str_prefix)
         for (i = 0; i < 32 - mask; i++)
                 CLEAR_BIT(*dst, i);
 
-        dst = ntohl(dst);
+        *dst = ntohl(*dst);
         inet_ntop(AF_INET, (void *)dst, str_prefix, 16);
 }
 

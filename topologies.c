@@ -63,3 +63,12 @@ build_first_topo()
 
         return topo;
 }
+
+int
+main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv)
+{
+        graph_t *first_graph;
+        first_graph = build_first_topo();
+        dump_nw_graph(first_graph);
+        return 0;
+}

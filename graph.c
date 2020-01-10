@@ -75,6 +75,6 @@ insert_link_between_two_nodes(node_t *node1, node_t *node2, char *from_if_name,
 
 /* display routine */
 void
-dump_graph(graph_t *graph)
+dump_graph(__attribute__((unused)) graph_t *graph)
 {
 }
