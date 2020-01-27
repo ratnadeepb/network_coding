@@ -93,20 +93,20 @@ GLTHREAD_TO_STRUCT(thread_to_node, node_t, graph_glue);
 
 /* return node, if present, by name from graph */
 static inline node_t *
-get_node_by_node_name(graph_t *topo, char *node_name)
+get_node_by_node_name(graph_t *first_graph, char *node_name)
 {
         glthread_t *glthreadptr = NULL;
         /* if the graph is empty return null */
-        if (IS_GLTHREAD_LIST_EMPTY(&topo->node_list))
+        if (IS_GLTHREAD_LIST_EMPTY(&first_graph->node_list))
                 return NULL;
 
-        ITERATE_GLTHREAD_BEGIN(&topo->node_list, glthreadptr)
+        ITERATE_GLTHREAD_BEGIN(&first_graph->node_list, glthreadptr)
         {
                 node_t *n = thread_to_node(glthreadptr);
                 if (strncmp(n->node_name, node_name, NODE_NAME_SIZE) == 0)
                         return n;
         }
-        ITERATE_GLTHREAD_END(&topo->node_list, glthreadptr);
+        ITERATE_GLTHREAD_END(&first_graph->node_list, glthreadptr);
         return NULL; /* if node not found */
 }
 

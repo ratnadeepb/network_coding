@@ -29,12 +29,12 @@ build_first_topo()
 #endif
 
         /* create new graph */
-        graph_t *topo = create_new_graph("Hello World generic graph");
+        graph_t *first_graph = create_new_graph("Hello World generic graph");
 
         /* create new nodes */
-        node_t *R0_re = create_graph_node(topo, "R0_re");
-        node_t *R1_re = create_graph_node(topo, "R1_re");
-        node_t *R2_re = create_graph_node(topo, "R2_re");
+        node_t *R0_re = create_graph_node(first_graph, "R0_re");
+        node_t *R1_re = create_graph_node(first_graph, "R1_re");
+        node_t *R2_re = create_graph_node(first_graph, "R2_re");
 
         /* insert links between nodes */
         insert_link_between_two_nodes(R0_re, R1_re, "eth0/0", "eth0/1",
@@ -61,14 +61,5 @@ build_first_topo()
         node_set_intf_ip_addr(R2_re, "eth0/3", "30.1.1.2", 24);
         node_set_intf_ip_addr(R2_re, "eth0/5", "40.1.1.2", 24);
 
-        return topo;
-}
-
-int
-main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv)
-{
-        graph_t *first_graph;
-        first_graph = build_first_topo();
-        dump_nw_graph(first_graph);
-        return 0;
+        return first_graph;
 }
