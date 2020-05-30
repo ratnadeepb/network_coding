@@ -4,3 +4,5 @@
  */
 
 #define CMDCODE_SHOW_NW_TOPOLOGY 1 /* show nw topology */
+#define CMDCODE_RUN_NODE_IP_ADDRESS                                            \
+        1 /* run node <node-name> resolve-arp <ip_address> */
