@@ -31,7 +31,7 @@ show_nw_topology_handler(param_t *param, ser_buff_t *tlv_buff,
 }
 
 static int
-arp_handler(param_t *param, ser_buff_t *tlv_buff, op_mode enable_or_disable)
+arp_handler(param_t *param, ser_buff_t *tlv_buf, op_mode enable_or_disable)
 {
         tlv_struct_t *tlv = NULL;
         char *node_name = NULL;
@@ -73,7 +73,7 @@ nw_init_cli()
         param_t *config = libcli_get_config_hook();
         param_t *run = libcli_get_run_hook();
         param_t *debug_show = libcli_get_debug_show_hook();
-        param_t *root = libcli_get_root();
+        // param_t *root = libcli_get_root();
 
         // {
         //         /* show topology */
@@ -83,12 +83,45 @@ nw_init_cli()
         //                    0, INVALID, 0, "Dump complete network topology");
         //         libcli_register_param(show, &topology);
         //         set_param_cmd_code(&topology, CMDCODE_SHOW_NW_TOPOLOGY);
-
-        // 	/* resolve arp */
-        // 	static param_t mac;
-        // 	init_param(&mac, LEAF, "ARP resolution", arp_handler, 0, IPV4,
-        // "resolve-arp", "Resolve arp for the node IP");
-        // 	libcli_register_param()
         // }
-        support_cmd_negation(config);
+        {
+                /* run node */
+                static param_t node;
+                init_param(&node, CMD, "node", NULL, NULL, INVALID, NULL,
+                           "Help: node");
+                libcli_register_param(run, &node);
+
+                {
+                        /* run node <node-name: string> */
+                        static param_t node_name;
+                        init_param(&node_name, LEAF, NULL, NULL, NULL, STRING,
+                                   "node-name", "Help: node-name");
+                        libcli_register_param(&node, &node_name);
+                        {
+                                /* run node <node-name: string> resolve-arp */
+                                static param_t resolve_arp;
+                                init_param(&resolve_arp, CMD, "resolve-arp",
+                                           NULL, NULL, INVALID, "resolve_arp",
+                                           "Help: resolve_arp");
+                                libcli_register_param(&node_name, &resolve_arp);
+
+                                {
+                                        /* run node <node-name: string>
+                                         * resolve-arp <ip-address> */
+                                        static param_t ip_address;
+                                        init_param(&ip_address, LEAF,
+                                                   "ip-address", arp_handler,
+                                                   NULL, IPV4, "ip_address",
+                                                   "Help: ip_address");
+                                        libcli_register_param(&resolve_arp,
+                                                              &ip_address);
+                                        set_param_cmd_code(
+                                            &ip_address,
+                                            CMDCODE_RUN_NODE_IP_ADDRESS);
+                                }
+                        }
+                }
+                support_cmd_negation(config);
+                start_shell();
+        }
 }

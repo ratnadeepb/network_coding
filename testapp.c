@@ -20,5 +20,7 @@ main(__attribute__((unused)) int argc, __attribute__((unused)) char **argv)
         first_graph = build_first_topo();
         nw_init_cli();
         start_shell();
+        // dump_nw_graph(first_graph);
+        // start_shell();
         return 0;
 }
