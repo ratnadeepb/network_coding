@@ -6,6 +6,7 @@
 #ifndef __GRAPH_H__
 #define __GRAPH_H__
 
+#include "comm.h"
 #include "gluethread/glthread.h"
 #include "net.h"
 #include <assert.h>
@@ -38,6 +39,8 @@ struct node_ {
         char node_name[NODE_NAME_SIZE];
         interface_t intf[MAX_INTF_PER_NODE];
         glthread_t graph_glue;
+        unsigned int udp_port_number;
+        int udp_sock_fd;
         node_nw_prop_t node_nw_prop;
 };
 

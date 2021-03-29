@@ -8,7 +8,8 @@ OBJS=gluethread/glthread.o \
 		net.o \
 		utils.o \
 		topologies.o \
-		nwcli.o
+		nwcli.o \
+		comm.o
 
 graph.exe: testapp.o ${OBJS} CommandParser/libcli.a
 	@${CC} ${CFLAGS} testapp.o ${OBJS} ${LIBS} -o ${TARGET} ${LIBS}
@@ -33,6 +34,9 @@ topologies.o: topologies.c
 
 nwcli.o:
 	@${CC} ${CFLAGS} -c -I . nwcli.c -o nwcli.o
+
+comm.o:
+	@${CC} ${CFLAGS} -c -I . comm.c -o comm.o
 
 CommandParser/libcli.a:
 	@(cd CommandParser; make)

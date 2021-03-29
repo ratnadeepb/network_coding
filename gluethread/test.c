@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 typedef struct _person {
+        char *name;
         int age;
         int weight;
         glthread_t glthread;
@@ -35,14 +36,24 @@ main(int argc, char **argv)
 {
         person_t person[5];
         memset(person, 0, sizeof(person_t) * 5);
+        person[0].name = (char *)malloc(sizeof(char) * 20);
+        memcpy(person[0].name, "This is name0", sizeof("This is name0"));
         person[0].age = 1;
         person[0].weight = 2;
+        person[1].name = (char *)malloc(sizeof(char) * 20);
+        memcpy(person[1].name, "This is name1", sizeof("This is name1"));
         person[1].age = 3;
         person[1].weight = 4;
+        person[2].name = (char *)malloc(sizeof(char) * 20);
+        memcpy(person[2].name, "This is name2", sizeof("This is name2"));
         person[2].age = 5;
         person[2].weight = 6;
+        person[3].name = (char *)malloc(sizeof(char) * 20);
+        memcpy(person[3].name, "This is name3", sizeof("This is name3"));
         person[3].age = 7;
         person[3].weight = 8;
+        person[4].name = (char *)malloc(sizeof(char) * 20);
+        memcpy(person[4].name, "This is name4", sizeof("This is name4"));
         person[4].age = 9;
         person[4].weight = 10;
 
@@ -66,6 +77,7 @@ main(int argc, char **argv)
 
                 person_t *p = thread_to_person(curr);
                 printf("Age = %d\n", p->age);
+                printf("Name = %s\n", p->name);
         }
         ITERATE_GLTHREAD_END(&base_glthread, curr);
 
