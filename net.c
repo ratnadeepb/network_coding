@@ -1,191 +1,134 @@
 /*
- * Created on Wed Jan 08 2020:14:31:29
- * Created by Ratnadeep Bhattacharya
+ * =====================================================================================
+ *
+ *       Filename:  net.c
+ *
+ *    Description:  This file contains general pupose Networking routines
+ *
+ *        Version:  1.0
+ *        Created:  Wednesday 18 September 2019 08:36:50  IST
+ *       Revision:  1.0
+ *       Compiler:  gcc
+ *
+ *         Author:  Er. Abhishek Sagar, Networking Developer (AS), sachinites@gmail.com
+ *        Company:  Brocade Communications(Jul 2012- Mar 2016), Current : Juniper Networks(Apr 2017 - Present)
+ *        
+ *        This file is part of the NetworkGraph distribution (https://github.com/sachinites).
+ *        Copyright (c) 2017 Abhishek Sagar.
+ *        This program is free software: you can redistribute it and/or modify
+ *        it under the terms of the GNU General Public License as published by  
+ *        the Free Software Foundation, version 3.
+ *
+ *        This program is distributed in the hope that it will be useful, but 
+ *        WITHOUT ANY WARRANTY; without even the implied warranty of 
+ *        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+ *        General Public License for more details.
+ *
+ *        You should have received a copy of the GNU General Public License 
+ *        along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * =====================================================================================
  */
 
 #include "graph.h"
-#include <assert.h>
-#include <math.h>
+#include <memory.h>
+#include "utils.h"
 #include <stdio.h>
-#include <stdlib.h>
 
-static unsigned int
-hashcode(void *ptr, unsigned int size)
-{
-        unsigned int val = 0, i = 0;
-        char *str = (char *)ptr;
-        while (i < size) {
-                val += *str;
-                val *= 97;
-                str++;
-                i++;
-        }
-        return val;
-}
-
+/*Heuristics, Assign a unique mac address to interface*/
 void
-intf_assign_mac_addr(interface_t *intf)
-{
-        node_t *node = intf->att_node;
-        if (!node) {
-                fprintf(stderr, "Attached node not found\n");
-                return;
-        }
-        unsigned int hash_val =
-            hashcode((void *)node->node_name, NODE_NAME_SIZE);
-        hash_val *= hashcode((void *)intf->if_name, IF_NAME_SIZE);
-        memset(IF_MAC(intf), 0, MAC_ADDR_LEN);
-        strncpy(IF_MAC(intf), (char *)&hash_val, MAC_ADDR_LEN);
+interface_assign_mac_address(interface_t *interface){
+
+    memset(IF_MAC(interface), 0, 48);
+    strcpy(IF_MAC(interface), interface->att_node->node_name);
+    strcat(IF_MAC(interface), interface->if_name);
 }
 
-bool_t
-node_set_lb_addr(node_t *node, char *ip_addr)
-{
-        assert(ip_addr);
-        node->node_nw_prop.is_lb_addr_config = TRUE;
-        strncpy(NODE_LO_ADDR(node), ip_addr, IP_ADDR_LEN);
+bool_t node_set_device_type(node_t *node, unsigned int F){
 
-        return TRUE;
+    SET_BIT(node->node_nw_prop.flags, F);
+    return TRUE;
 }
 
-bool_t
-node_set_intf_ip_addr(node_t *node, char *local_if, char *ip_addr, char mask)
-{
-        interface_t *intf = get_node_if_by_name(node, local_if);
-        if (intf == NULL) {
-                fprintf(stderr, "Interface not found on this node\n");
-                return FALSE;
-        }
-        // intf_assign_mac_addr(intf); /* mac will be assigned in
-        // insert_link_between_two_nodes in graph.c */
-        if (intf->intf_nw_props.is_ip_add_config) { /* ip address on this
-                                                       interface already set */
-                fprintf(stderr, "IP already configured on this interface\n");
-                return FALSE;
-        }
-        intf->intf_nw_props.is_ip_add_config = TRUE;
-        strncpy(IF_IP(intf), ip_addr, IP_ADDR_LEN);
-        intf->intf_nw_props.mask = mask;
-        return TRUE;
+bool_t node_set_loopback_address(node_t *node, char *ip_addr){
+
+    assert(ip_addr);
+
+    if(IS_BIT_SET(node->node_nw_prop.flags, HUB))
+        assert(0); /*Wrong Config : A HUB do not have any IP addresses*/
+
+    if(!IS_BIT_SET(node->node_nw_prop.flags, L3_ROUTER))
+        assert(0); /*You must enable L3 routing on device first*/
+
+    node->node_nw_prop.is_lb_addr_config = TRUE;
+    strncpy(NODE_LO_ADDR(node), ip_addr, 16);
+    NODE_LO_ADDR(node)[16] = '\0';
+    
+    return TRUE;
 }
 
-bool_t
-node_unset_intf_ip_addr(node_t *node, char *local_if)
-{
-        interface_t *intf = get_node_if_by_name(node, local_if);
-        if (intf == NULL) {
-                fprintf(stderr, "Interface not found on this node");
-                return FALSE;
-        }
-        if (!intf->intf_nw_props.is_ip_add_config) /* IP already deleted */
-                return TRUE;
-        intf->intf_nw_props.is_ip_add_config = FALSE;
-        intf->intf_nw_props.mask = 0;
-        memset((void *)IF_IP(intf), 0, IP_ADDR_LEN);
-        return TRUE;
+bool_t node_set_intf_ip_address(node_t *node, char *local_if, 
+                                char *ip_addr, char mask) {
+
+    interface_t *interface = get_node_if_by_name(node, local_if);
+    if(!interface) assert(0);
+
+    strncpy(IF_IP(interface), ip_addr, 16);
+    IF_IP(interface)[16] = '\0';
+    interface->intf_nw_props.mask = mask; 
+    interface->intf_nw_props.is_ipadd_config = TRUE;
+    return TRUE;
 }
 
-interface_t *
-node_get_matching_subnet_interface(node_t *node, char *ip_addr)
-{
-        interface_t *intf;
-        int i;
-        char *local_nw_id;
-        char *remote_nw_id;
+bool_t node_unset_intf_ip_address(node_t *node, char *local_if){
 
-        local_nw_id = (char *)malloc(sizeof(char) * IP_ADDR_LEN);
-        remote_nw_id = (char *)malloc(sizeof(char) * IP_ADDR_LEN);
-        intf = NULL;
-
-        for (i = 0; i < MAX_INTF_PER_NODE; i++) {
-                char mask = node->intf[i].intf_nw_props.mask;
-                apply_mask(IF_IP(&node->intf[i]), mask,
-                           local_nw_id); /* get the nw id of the interface */
-                apply_mask(ip_addr, mask, remote_nw_id);
-                if (strncmp(local_nw_id, remote_nw_id, IP_ADDR_LEN) == 0)
-                        intf = &node->intf[i];
-        }
-        return intf; /* null if none found */
+    return TRUE;
 }
 
-void
-dump_nw_graph(graph_t *graph)
-{
-        glthread_t *curr;
-        int i;
-        curr = NULL;
+void dump_node_nw_props(node_t *node){
 
-        ITERATE_GLTHREAD_BEGIN(&graph->node_list, curr)
-        {
-                node_t *n = thread_to_node(curr);
-                printf("Node name: %s\n", n->node_name);
-                if (!n->intf) {
-                        printf("This node has no interfaces\n");
-                } else {
-                        if (n->node_nw_prop.is_lb_addr_config)
-                                printf("\tLoopback addres: %s\n",
-                                       n->node_nw_prop.lb_addr.ip_addr);
-                        for (i = 0; i < MAX_INTF_PER_NODE; i++) {
-                                if (strncmp(n->intf[i].if_name, "",
-                                            IF_NAME_SIZE) != 0) {
-                                        // if (&n->intf[i] != NULL) {
-                                        printf("\tInterface: %s",
-                                               n->intf[i].if_name);
-                                        printf(" , nbr node: %s",
-                                               n->intf[i].att_node->node_name);
-                                        if (n->intf[i]
-                                                .intf_nw_props.is_ip_add_config)
-                                                printf(", addres: "
-                                                       "%s/%d\n",
-                                                       n->intf[i]
-                                                           .intf_nw_props.ip_add
-                                                           .ip_addr,
-                                                       n->intf[i]
-                                                           .intf_nw_props.mask);
-                                }
-                        }
-                }
-        }
-        ITERATE_GLTHREAD_END(&graph->node_list, curr);
+    printf("\nNode Name = %s, udp_port_no = %u\n", node->node_name, node->udp_port_number);
+    printf("\t node flags : %u", node->node_nw_prop.flags);
+    if(node->node_nw_prop.is_lb_addr_config){
+        printf("\t  lo addr : %s/32\n", NODE_LO_ADDR(node));
+    }
 }
 
-unsigned int
-convert_ip_from_str_to_int(char *ip_addr)
-{
-        char *token;
-        char *bits;
-        char *delim = ".";
-        unsigned int ip;
-        int i;
+void dump_intf_props(interface_t *interface){
 
-        ip = 0;
-        for (i = 0, token = ip_addr;; i++, token = NULL) {
-                bits = strtok(token, delim);
-                if (!bits)
-                        break;
-                if (i > 3) {
-                        fprintf(stderr, "Wrong ip format\n");
-                        return -1;
-                }
+    dump_interface(interface);
 
-                *bits *= (unsigned int)pow(256, 3 - i);
-                ip += *bits;
-        }
-        return ip;
+    if(interface->intf_nw_props.is_ipadd_config){
+        printf("\t IP Addr = %s/%u", IF_IP(interface), interface->intf_nw_props.mask);
+    }
+    else{
+         printf("\t IP Addr = %s/%u", "Nil", 0);
+    }
+
+    printf("\t MAC : %u:%u:%u:%u:%u:%u\n", 
+        IF_MAC(interface)[0], IF_MAC(interface)[1],
+        IF_MAC(interface)[2], IF_MAC(interface)[3],
+        IF_MAC(interface)[4], IF_MAC(interface)[5]);
 }
 
-void
-convert_ip_from_int_to_str(unsigned int ip_addr, char *output_buffer)
-{
-        int i;
+void dump_nw_graph(graph_t *graph){
 
-        for (i = 0; i < 3; i++) {
-                unsigned int num =
-                    (int)(ip_addr / (unsigned int)pow(256, 3 - i));
-                ip_addr -= num;
-                if (i == 0)
-                        strcpy(output_buffer, (char *)&num);
-                else
-                        strcat(output_buffer, (char *)&num);
+    node_t *node;
+    glthread_t *curr;
+    interface_t *interface;
+    unsigned int i;
+    
+    printf("Topology Name = %s\n", graph->topology_name);
+
+    ITERATE_GLTHREAD_BEGIN(&graph->node_list, curr){
+
+        node = graph_glue_to_node(curr);
+        dump_node_nw_props(node);
+        for( i = 0; i < MAX_INTF_PER_NODE; i++){
+            interface = node->intf[i];
+            if(!interface) break;
+            dump_intf_props(interface);
         }
+    } ITERATE_GLTHREAD_END(&graph->node_list, curr);
+
 }

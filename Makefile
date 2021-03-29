@@ -1,56 +1,59 @@
 CC=gcc
-CFLAGS=-g -Wall -Wextra
-LIBS=-lm -lpthread -L ./CommandParser -lcli
-TARGET=graph.exe
-
+CFLAGS=-g
+TARGET:test.exe
+LIBS=-lpthread -L ./CommandParser -lcli
 OBJS=gluethread/glthread.o \
-		graph.o \
-		net.o \
-		utils.o \
-		topologies.o \
-		nwcli.o \
-		comm.o
+		  graph.o 		   \
+		  topologies.o	   \
+		  net.o			   \
+		  comm.o		   \
+		  Layer2/layer2.o  \
+		  Layer3/layer3.o  \
+		  nwcli.o
 
-graph.exe: testapp.o ${OBJS} CommandParser/libcli.a
-	@${CC} ${CFLAGS} testapp.o ${OBJS} ${LIBS} -o ${TARGET} ${LIBS}
+test.exe:testapp.o ${OBJS} CommandParser/libcli.a
+	${CC} ${CFLAGS} testapp.o ${OBJS} -o test.exe ${LIBS}
 
-testapp.o: testapp.c
-	@${CC} ${CFLAGS} -c testapp.c -o testapp.o
+testapp.o:testapp.c
+	${CC} ${CFLAGS} -c testapp.c -o testapp.o
 
-gluethread/glthread.o: gluethread/glthread.c
-	@${CC} ${CFLAGS} -c -I gluethread gluethread/glthread.c -o gluethread/glthread.o
+gluethread/glthread.o:gluethread/glthread.c
+	${CC} ${CFLAGS} -c -I gluethread gluethread/glthread.c -o gluethread/glthread.o
 
-graph.o: graph.c
-	@${CC} ${CFLAGS} -c -I . graph.c -o graph.o
+graph.o:graph.c
+	${CC} ${CFLAGS} -c -I . graph.c -o graph.o
 
-net.o: net.c
-	@${CC} ${CFLAGS} -c -I . net.c -o net.o
+topologies.o:topologies.c
+	${CC} ${CFLAGS} -c -I . topologies.c -o topologies.o
 
-utils.o: utils.c
-	@${CC} ${CFLAGS} -c -I . utils.c -o utils.o
+net.o:net.c
+	${CC} ${CFLAGS} -c -I . net.c -o net.o
 
-topologies.o: topologies.c
-	@${CC} ${CFLAGS} -c -I . topologies.c -o topologies.o
+comm.o:comm.c
+	${CC} ${CFLAGS} -c -I . comm.c -o comm.o
 
-nwcli.o:
-	@${CC} ${CFLAGS} -c -I . nwcli.c -o nwcli.o
+Layer2/layer2.o:Layer2/layer2.c
+	${CC} ${CFLAGS} -c -I . Layer2/layer2.c -o Layer2/layer2.o
 
-comm.o:
-	@${CC} ${CFLAGS} -c -I . comm.c -o comm.o
+Layer3/layer3.o:Layer3/layer3.c
+	${CC} ${CFLAGS} -c -I . Layer3/layer3.c -o Layer3/layer3.o
+
+nwcli.o:nwcli.c
+	${CC} ${CFLAGS} -c -I . nwcli.c  -o nwcli.o
 
 CommandParser/libcli.a:
-	@(cd CommandParser; make)
+	(cd CommandParser; make)
+clean:
+	rm *.o
+	rm gluethread/glthread.o
+	rm *exe
+	rm Layer2/*.o
+	rm Layer3/*.o
 
 all:
-	@make
-	@make CommandParser/libcli.a
-	# @(cd CommandParser; make)
-
-clean:
-	@rm -f *.o
-	@rm -f gluethread/glthread.o
-	@rm -f *.exe
+	make
+	(cd CommandParser; make)
 
 cleanall:
-	@make clean
-	@(cd CommandParser; make clean)
+	make clean
+	(cd CommandParser; make clean)
